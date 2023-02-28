@@ -110,94 +110,87 @@ int HexAtoi(String st) {
 }
 
 
-
-// void loop() {
-
-//   SetBaut_Finger();
-//   while (1)
-//     ;
-// }
-void SetBaut_Finger(void) {
-  Serial.println("change Baut");
-  // uint8_t Adafruit_Fingerprint::setSysParaBaud(void) {
-  uint8_t packet[] = { 0x0e, 4, 1 };
-  // writePacket(theAddress, FINGERPRINT_COMMANDPACKET, sizeof(packet) + 2, packet);
-  Adafruit_Fingerprint_Packet pp = Adafruit_Fingerprint_Packet(FINGERPRINT_COMMANDPACKET, sizeof(packet), packet);
-  finger.writeStructuredPacket(pp);
-  uint8_t len = getReply(packet, DEFAULTTIMEOUT);
-  Serial.println(len);
-
-  packet[0] = { 0x0e };
-  packet[1] = { 6 };
-  packet[2] = { 0 };
-  // packet = { 0x0e, 6, 0 };
-  // writePacket(theAddress, FINGERPRINT_COMMANDPACKET, sizeof(packet)+2, packet);
-  pp = Adafruit_Fingerprint_Packet(FINGERPRINT_COMMANDPACKET, sizeof(packet), packet);
-  finger.writeStructuredPacket(pp);
+String getmodelstring() {
+  String ret = "";
+  uint8_t delete_st;
+  while (Serial1.available()) {
+    delete_st = Serial1.read();
+  }
+  // delete=
+  p = finger.getModel();
+  switch (p) {
+    case FINGERPRINT_OK:
+      // Serial.print("Template ");
+      // // Serial.print(id);
+      // Serial.println(" transferring:");
+      break;
+    default:
+      Serial.print("Unknown error ");
+      Serial.println(p);
+      return "";
+  }
+  Serial.flush();
+  // one data packet is 267 bytes. in one data packet, 11 bytes are 'usesless' :D
 
 
+  uint8_t templateBuffer[688];
+  memset(templateBuffer, 0xffff, 688);  //initialize template buffer
+  Serial1.flush();
+  int index = 0;
+  uint32_t starttime = millis();
+  while ((index < 688) && ((millis() - starttime) < 1000)) {
+    if (Serial1.available() > 0) {
+      templateBuffer[index] = Serial1.read();
+      index++;
+    }
+  }
+  Serial1.flush();
 
-  len = getReply(packet, DEFAULTTIMEOUT);
-  Serial.println(len);
-  // if ((len != 1) && (packet[0] != FINGERPRINT_ACKPACKET))
-  //   return -1;
-  // return packet[1];
+  // Serial.print(index);
+  // Serial.println(" bytes read");
+
+  //dump entire templateBuffer.
+  index = 0;
+  // Serial.print("DData:");
+  for (int ii = 0; ii < 4; ii++) {
+
+    index += 9;
+    for (int i = 0; i < 128; i++) {
+      ret += StrHex(templateBuffer[index++], 2);
+    }
+    index += 2;
+  }
+  ret + '\n';
+  // Serial.flush();
+  return ret;
+  // Serial.p("\ndone.");
 }
+
+
 
 
 #define FINGERPRINT_DOWNLOAD 0x09
 uint8_t enrolldata(String st) {
-  // Serial.println(st.length());
-  // if (st.length() != 1025) {  // 1025列でなければ、エラー
-  //   return -1;
-  // }
-
-  // SetBaut_Finger();
-
   uint8_t packet1[] = { FINGERPRINT_DOWNLOAD, 0x01 };
   Adafruit_Fingerprint_Packet p1 = Adafruit_Fingerprint_Packet(FINGERPRINT_COMMANDPACKET, sizeof(packet1), packet1);
-
   finger.writeStructuredPacket(p1);
   delay(10);
-  // S_terial.flush();
   uint8_t packet[32];
-  // uint8_t packet17[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
-  // uint8_t packet17[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20 };
-
-  // uint8_t packet16[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x24 };
   uint8_t packet17[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2A };
-	// uint8_t packet17[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 034*16x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2A};
-
-  // Adafruit_Fingerprint_Packet p16 = Adafruit_Fingerprint_Packet(FINGERPRINT_DATAPACKET, sizeof(packet16), packet16);
-
-
-  // Adafruit_Fingerprint_Packet p16 = Adafruit_Fingerprint_Packet(FINGERPRINT_DATAPACKET, sizeof(packet16), packet16);
-  // uint8_t packet17[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
   Adafruit_Fingerprint_Packet p17 = Adafruit_Fingerprint_Packet(FINGERPRINT_ENDDATAPACKET, sizeof(packet17), packet17);
-  // for (int i=0; i < 512; i++){
   for (int ii = 0; ii < 16; ii++) {
     for (int i = 0; i < 32; i++) {
       packet[i] = 0;
-      // packet[i] = HexAtoi(st.substring(i * 2, i * 2 + 2));
       packet[i] = HexAtoi(st.substring(i * 2 + ii * 2 * 32, i * 2 + 2 + ii * 2 * 32));
       printHex(packet[i], 2);
-      Adafruit_Fingerprint_Packet pp = Adafruit_Fingerprint_Packet(FINGERPRINT_DATAPACKET, sizeof(packet), packet);
-      finger.writeStructuredPacket(pp);
-      delay(10);
-
-      // printHex(HexAtoi(st.substring(i * 2, i * 2 + 2)),2);
-      // Serial.print(packet[i]);
-      // Serial.print(",");
-      // printHex(packet[i], 2);
-      // Serial.print(",");
+      // Serial.println();
     }
+    Adafruit_Fingerprint_Packet pp = Adafruit_Fingerprint_Packet(FINGERPRINT_DATAPACKET, sizeof(packet), packet);
+    finger.writeStructuredPacket(pp);
+    delay(10);
   }
-  // finger.writeStructuredPacket(p16);
-  // delay(10);
   finger.writeStructuredPacket(p17);
   delay(10);
-
-
   Serial.println();
   packet1[1] = 0x02;
   Serial.println(packet1[0], packet1[1]);
@@ -209,45 +202,38 @@ uint8_t enrolldata(String st) {
       packet[i] = 0;
       packet[i] = HexAtoi(st.substring(i * 2 + ii * 2 * 32, i * 2 + 2 + ii * 2 * 32));
       printHex(packet[i], 2);
-      Adafruit_Fingerprint_Packet pp = Adafruit_Fingerprint_Packet(FINGERPRINT_DATAPACKET, sizeof(packet), packet);
-      finger.writeStructuredPacket(pp);
-      delay(10);
-
-      // printHex(HexAtoi(st.substring(i * 2, i * 2 + 2)),2);
-      // Serial.print(packet[i]);
-      // Serial.print(",");
     }
+    Adafruit_Fingerprint_Packet pp = Adafruit_Fingerprint_Packet(FINGERPRINT_DATAPACKET, sizeof(packet), packet);
+    finger.writeStructuredPacket(pp);
+    delay(10);
   }
 
-  // finger.writeStructuredPacket(p16);
-  // delay(10);
   finger.writeStructuredPacket(p17);
   delay(10);
-
-  // for (int i = 0; i < 34; i++) {
-  // }
-  // delay(100);
-  // Serial.print(st[i*2+1]);
-  // }
-
-  // uint8_t len = getReply(packet17, 10000);
-
-  // // Serial.print("len:");
-  // // Serial.println(len);
-
-  // if ((len != 1) && (packet[0] != FINGERPRINT_ACKPACKET))
-  //   return -1;
-  // return packet17[1];
 
   uint8_t len = getReply(packet17, DEFAULTTIMEOUT);
   Serial.print("len:");
   Serial.println(len);
+
+  Serial.print("strcmp:");
+  st.trim();
+  switch (strcmp(st.c_str(), getmodelstring().c_str())) {
+    case 0:
+      Serial.println("Data loaded");
+      break;
+    default:
+      Serial.println("Data load error");
+      break;
+  }
+
+  finger.getParameters();
+  while (finger.status_reg == 0xA) {
+    delay(10);
+    finger.getParameters();
+  }
   if ((len != 1) && (packet[0] != FINGERPRINT_ACKPACKET))
     return -1;
   return packet17[1];
-  // Serial.println("fin");
-  // Serial.flush();
-  return 1;
 }
 
 uint8_t uploadModel(void) {
@@ -377,7 +363,7 @@ uint8_t uploadModel(void) {
   finger.writeStructuredPacket(p17);
   delay(10);
   Serial.println();
-  uint8_t len = getReply(packet17, 100000);
+  uint8_t len = getReply(packet17, DEFAULTTIMEOUT);
   Serial.print("len:");
   Serial.println(len);
   if ((len != 1) && (packet[0] != FINGERPRINT_ACKPACKET))
@@ -388,14 +374,24 @@ uint8_t uploadModel(void) {
 
 
 uint8_t downloadFingerprintTemplate(uint16_t id) {
-  delay(1000);
+  delay(100);
   Serial.println("------------------------------------");
   Serial.print("Attempting to load #");
   Serial.println(id);
   Serial.flush();
 
+  finger.getParameters();
+  while (finger.status_reg == 0xA) {
+    delay(10);
+    finger.getParameters();
+  }
+  Serial.print("status:");
+  Serial.println(finger.status_reg, HEX);
+  delay(10);
+
   uint8_t p = finger.loadModel(id);
   delay(10);
+  Serial.print("id:");
   Serial.println(id);
   Serial.flush();
   switch (p) {
@@ -419,6 +415,9 @@ uint8_t downloadFingerprintTemplate(uint16_t id) {
   Serial.print("Attempting to get #");
   Serial.println(id);
   Serial.flush();
+  uint8_t delete_flush;
+  while (Serial1.available() > 0) delete_flush = Serial1.read();
+
   p = finger.getModel();
   switch (p) {
     case FINGERPRINT_OK:
@@ -437,6 +436,7 @@ uint8_t downloadFingerprintTemplate(uint16_t id) {
 
   uint8_t templateBuffer[688];
   memset(templateBuffer, 0xffff, 688);  //initialize template buffer
+  Serial1.flush();
   int index = 0;
   uint32_t starttime = millis();
   while ((index < 688) && ((millis() - starttime) < 1000)) {
@@ -445,12 +445,14 @@ uint8_t downloadFingerprintTemplate(uint16_t id) {
       index++;
     }
   }
+  Serial1.flush();
 
   Serial.print(index);
   Serial.println(" bytes read");
 
   //dump entire templateBuffer.
   index = 0;
+  Serial.print("DData:");
   for (int ii = 0; ii < 4; ii++) {
 
     index += 9;
@@ -459,114 +461,10 @@ uint8_t downloadFingerprintTemplate(uint16_t id) {
     }
     index += 2;
   }
-  Serial.println();
-
-  // }
-
-
-
-
-
-
-
-
-  // uint8_t bytesReceived[534];  // 2 data packets
-  // memset(bytesReceived, 0xff, 534);
-
-  // uint32_t starttime = millis();
-  // int i = 0;
-  // while (i < 534 && (millis() - starttime) < 20000) {
-  //   if (Serial1.available()) {
-  //     bytesReceived[i++] = Serial1.read();
-  //   }
-  // }
-  // Serial.print(i);
-  // Serial.println(" bytes read.");
-  // Serial.println("Decoding packet...");
-
-  uint8_t fingerTemplate[534];  // the real template
-  memset(fingerTemplate, 0x00, 534);
-
-  // filtering only the data packets
-  int uindx = 9;
-  index = 0;
-  // memcpy(fingerTemplate + index, bytesReceived + uindx, 128);  // first 256 bytes
-  // index += 128;                                                // skip data
-  // uindx += 128;                                                // skip checksum
-  // uindx += 2;                                                  // skip checksum
-  // uindx += 9;                                                  // skip next header
-  // memcpy(fingerTemplate + index, bytesReceived + uindx, 128);  // first 256 bytes
-  // index += 128;                                                // skip data
-  // uindx += 128;                                                // skip checksum
-  // uindx += 2;                                                  // skip checksum
-  // uindx += 9;                                                  // skip next header
-  // memcpy(fingerTemplate + index, bytesReceived + uindx, 128);  // first 256 bytes
-  // index += 128;                                                // skip data
-  // uindx += 128;                                                // skip checksum
-  // // uindx += 128;                                                  // skip checksum
-  // uindx += 2;                                                  // skip checksum
-  // uindx += 9;                                                  // skip next header
-  // memcpy(fingerTemplate + index, bytesReceived + uindx, 108);  // first 256 bytes
-
-  // index += 128-32;                                                // skip data
-  // uindx += 128-32;                                                  // skip checksum
-  // memcpy(fingerTemplate + index, bytesReceived + uindx, 32);  // first 256 bytes
-  // uindx += 128;                                                // skip data
-  // uindx += 2;                                                  // skip checksum
-  // uindx += 9;                                                  // skip next header
-  // memcpy(fingerTemplate + index, bytesReceived + uindx, 128);  // first 256 bytes
-  // uindx += 128;                                                // skip data
-  // uindx += 2;                                                  // skip checksum
-  // uindx += 9;                                                  // skip next header
-  // memcpy(fingerTemplate + index, bytesReceived + uindx, 128);  // first 256 bytes
-  // memcpy(fingerTemplate + index, bytesReceived + uindx, 256);  // first 256 bytes
-  // uindx += 256;                                                // skip data
-  // uindx += 2;                                                  // skip checksum
-  // uindx += 9;                                                  // skip next header
-  // index += 256;                                                // advance pointer
-  // // index += 11;                                                // advance pointer
-  // memcpy(fingerTemplate + index, bytesReceived + uindx, 256);  // second 256 bytes
-
-  // for (int i = 0; i < 534; ++i) {
-  //Serial.print("0x");
-  // printHex(bytesReceived[i], 2);
-  //Serial.print(", ");
-  // }
-  for (int i = 0; i < 512; ++i) {
-    // Serial.print("0x");
-    printHex(fingerTemplate[i], 2);
-    //   //Serial.print(", ");
-  }
   Serial.println("\ndone.");
   Serial.flush();
 
   return p;
-
-  /*
-    uint8_t templateBuffer[256];
-    memset(templateBuffer, 0xff, 256);  //zero out template buffer
-    int index=0;
-    uint32_t starttime = millis();
-    while ((index < 256) && ((millis() - starttime) < 1000))
-    {
-    if (mySerial.available())
-    {
-      templateBuffer[index] = mySerial.read();
-      index++;
-    }
-    }
-    Serial.print(index); Serial.println(" bytes read");
-    //dump entire templateBuffer.  This prints out 16 lines of 16 bytes
-    for (int count= 0; count < 16; count++)
-    {
-    for (int i = 0; i < 16; i++)
-    {
-      Serial.print("0x");
-      Serial.print(templateBuffer[count*16+i], HEX);
-      Serial.print(", ");
-    }
-    Serial.println();
-    }*/
 }
 
 
@@ -726,6 +624,89 @@ uint16_t getFingerprintEnroll(uint16_t id) {
 }
 
 
+uint8_t getFingerprintID() {
+  uint8_t p = finger.getImage();
+  switch (p) {
+    case FINGERPRINT_OK:
+      Serial.println("Image taken");
+      break;
+    case FINGERPRINT_NOFINGER:
+      // Serial.println("No finger detected");
+      return p;
+    case FINGERPRINT_PACKETRECIEVEERR:
+      Serial.println("Communication error");
+      return p;
+    case FINGERPRINT_IMAGEFAIL:
+      Serial.println("Imaging error");
+      return p;
+    default:
+      Serial.println("Unknown error");
+      return p;
+  }
+
+  // OK success!
+
+  p = finger.image2Tz();
+  switch (p) {
+    case FINGERPRINT_OK:
+      Serial.println("Image converted");
+      break;
+    case FINGERPRINT_IMAGEMESS:
+      Serial.println("Image too messy");
+      return p;
+    case FINGERPRINT_PACKETRECIEVEERR:
+      Serial.println("Communication error");
+      return p;
+    case FINGERPRINT_FEATUREFAIL:
+      Serial.println("Could not find fingerprint features");
+      return p;
+    case FINGERPRINT_INVALIDIMAGE:
+      Serial.println("Could not find fingerprint features");
+      return p;
+    default:
+      Serial.println("Unknown error");
+      return p;
+  }
+
+  // OK converted!
+  p = finger.fingerSearch();
+  if (p == FINGERPRINT_OK) {
+    Serial.println("Found a print match!");
+  } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
+    Serial.println("Communication error");
+    return p;
+  } else if (p == FINGERPRINT_NOTFOUND) {
+    Serial.println("Did not find a match");
+    return p;
+  } else {
+    Serial.println("Unknown error");
+    return p;
+  }
+
+  // found a match!
+  Serial.print("Found ID #"); Serial.print(finger.fingerID);
+  Serial.print(" with confidence of "); Serial.println(finger.confidence);
+
+  return finger.fingerID;
+}
+
+// returns -1 if failed, otherwise returns ID #
+int getFingerprintIDez() {
+  uint8_t p = finger.getImage();
+  if (p != FINGERPRINT_OK)  return -1;
+
+  p = finger.image2Tz();
+  if (p != FINGERPRINT_OK)  return -1;
+
+  p = finger.fingerFastSearch();
+  if (p != FINGERPRINT_OK)  return -1;
+
+  // found a match!
+  Serial.print("Found ID #"); Serial.print(finger.fingerID);
+  Serial.print(" with confidence of "); Serial.println(finger.confidence);
+  return finger.fingerID;
+}
+
 
 
 void printHex(int num, int precision) {
@@ -736,4 +717,13 @@ void printHex(int num, int precision) {
 
   sprintf(tmp, format, num);
   Serial.print(tmp);
+}
+String StrHex(int num, int precision) {
+  char tmp[16];
+  char format[128];
+
+  sprintf(format, "%%.%dX", precision);
+
+  sprintf(tmp, format, num);
+  return tmp;
 }

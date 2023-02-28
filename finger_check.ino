@@ -12,17 +12,21 @@ void setup() {
   };  // Waiting for Serial Monitor
   Serial.println("serial start");
   Serial.flush();
-  // set the data rate for the sensor serial port
-  // Serial1.begin(9600);
-  // finger.begin(57600);
-  finger.begin(9600);
-  // Serial2.begin(9600);
+  finger.begin(57600);
+  Serial.print("setBaud:");
+
+  //Baud Rateを変えると、finger sensor のシリアルの数値変更が必要
+  //Baud Rateは一度替えると、電源が切れても継続するみたいなので、変更したら、通信できなくなるおそれあり
+  // uint8_t packet[] = { FINGERPRINT_WRITE_REG, FINGERPRINT_BAUD_REG_ADDR, FINGERPRINT_BAUDRATE_57600 };
+  // // writePacket(theAddress, FINGERPRINT_COMMANDPACKET, sizeof(packet) + 2, packet);
+  // Adafruit_Fingerprint_Packet pp = Adafruit_Fingerprint_Packet(FINGERPRINT_COMMANDPACKET, sizeof(packet), packet);
+  // finger.writeStructuredPacket(pp);
 
   // finger print check
   if (!finger.verifyPassword()) {
     Serial.println("Did not find fingerprint sensor :(");
     Serial.flush();
-    while(!finger.verifyPassword()){
+    while (!finger.verifyPassword()) {
       delay(1);
     }
   } else {
@@ -60,13 +64,29 @@ void setup() {
   Serial.println(finger.templateCount);
 
   p = uploadFingerpintTemplate(100);
-  delay(2000);
+  // delay(2000);
+  while (finger.status_reg == 0xA) {
+    delay(100);
+    finger.getParameters();
+  }
   downloadFingerprintTemplate(100);
-  delay(2000);
-  downloadFingerprintTemplate(100);
+  // delay(2000);
+  // downloadFingerprintTemplate(100);
   Serial.print("template Count:");
+  // delay(100);
+  // delay(10000);
+  while (finger.status_reg != 0x2) {
+    delay(100);
+    finger.getParameters();
+  }
   finger.getTemplateCount();
-  delay(100);
+  // Serial.println(finger.status_reg);
+  finger.getTemplateCount();
+  finger.getTemplateCount();
+  while (finger.status_reg == 0xA) {
+    delay(10);
+    finger.getParameters();
+  }
   // Serial.print("tmp_count:");
   Serial.println(finger.templateCount);
   Serial.flush();
@@ -74,6 +94,19 @@ void setup() {
   Serial.println("test2");
 }
 
+String resp(uint8_t p) {
+  switch (p) {
+    case FINGERPRINT_OK:
+      return "FINGERPRINT_OK";
+    case FINGERPRINT_PACKETRECIEVEERR:
+      return "FINGERPRINT_PACKETRECIEVEERR";
+      break;
+    case FINGERPRINT_BADPACKET:
+      return "FINGERPRINT_BADPACKET";
+    default:
+      return "Unknown error ";
+  }
+}
 
 String myString;
 // char myString2;
@@ -85,7 +118,7 @@ void loop() {
 
   if (Serial.available()) {
     myString = Serial.readString();
-    Serial.println(myString);
+    Serial.print(myString);
   }
   if (myString.startsWith("enroll:")) {
     myString.replace("enroll:", "");
@@ -94,31 +127,38 @@ void loop() {
     downloadFingerprintTemplate(myString.toInt());
     // enID=cngString.toInt();
   }
+  if (myString.startsWith("count:")) {
+    // myString.replace("enroll:", "");
+    // Serial.println(myString);
+    finger.getTemplateCount();
+    finger.getParameters();
+    while (finger.status_reg == 0xA) {
+      delay(10);
+      finger.getParameters();
+    }
+    Serial.println(finger.templateCount);
+    myString = "";
+    // downloadFingerprintTemplate(myString.toInt());
+    // enID=cngString.toInt();
+  }
+  if (myString.startsWith("store:")) {
+    myString.replace("store:", "");
+    Serial.print(myString);
+    p = finger.storeModel(myString.toInt());
+    Serial.println(resp(p));
+    Serial.flush();
+    myString = "";
+    // downloadFingerprintTemplate(myString.toInt());
+    // enID=cngString.toInt();
+  }
   if (myString.startsWith("enroll_data:")) {
     myString.replace("enroll_data:", "");
     // Serial.println(myString);
     p = enrolldata(myString);
     switch (p) {
       case FINGERPRINT_OK:
-        Serial.println("upload ");
-        // Serial.print(id2);
-        // Serial.println(" loaded");
-        Serial.println(p);
-        // Serial.read();
+        Serial.println("FINGERPRINT_OK");
         Serial.flush();
-        delay(100);
-        p = finger.storeModel(10);
-        // Serial.flush();
-        Serial.println(p);
-        if (p == FINGERPRINT_OK) {
-
-          Serial.print("id:");
-          Serial.print(101);
-          Serial.println("-saved");
-          Serial.flush();
-          // downloadFingerprintTemplate(100);
-        }
-        // return p;
         break;
       case FINGERPRINT_PACKETRECIEVEERR:
         Serial.println("Communication error");
@@ -148,5 +188,8 @@ void loop() {
     // Serial.print("tmp_count:");
     Serial.println(finger.templateCount);
     // enID=cngString.toInt();
+  }
+  if(myString==""){
+    getFingerprintID();
   }
 }
