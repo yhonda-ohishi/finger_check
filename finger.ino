@@ -1,5 +1,4 @@
 
-
 uint8_t uploadFingerpintTemplate(uint16_t id) {
   uint8_t p = uploadModel();
   switch (p) {
@@ -7,7 +6,7 @@ uint8_t uploadFingerpintTemplate(uint16_t id) {
       Serial.println("upload ");
       // Serial.print(id2);
       // Serial.println(" loaded");
-      // Serial.println(p);
+      Serial.println(p);
       // Serial.read();
       Serial.flush();
       p = finger.storeModel(id);
@@ -16,6 +15,11 @@ uint8_t uploadFingerpintTemplate(uint16_t id) {
         Serial.print("id:");
         Serial.print(id);
         Serial.println("-saved");
+        Serial.flush();
+        finger.getTemplateCount();
+
+        Serial.print("tmp:count:");
+        Serial.println(finger.templateCount);
         Serial.flush();
       }
       return p;
@@ -87,9 +91,165 @@ uint8_t getReply(uint8_t packet[], uint16_t timeout) {
 }
 
 
+int HexAtoi(String st) {
+  int ret = 0;
+  if (st.length() == 2) {
+    if (st[0] >= 'A' && st[0] <= 'F') {
+      ret += (st[0] - 'A' + 10) * 16;
+    } else if (st[0] >= '0' && st[0] <= '9') {
+      ret += (st[0] - '0') * 16;
+    }
+    if (st[1] >= 'A' && st[1] <= 'F') {
+      ret += (st[1] - 'A' + 10);
+    } else if (st[1] >= '0' && st[1] <= '9') {
+      ret += (st[1] - '0');
+    }
+    //
+  }
+  return ret;
+}
+
+
+
+// void loop() {
+
+//   SetBaut_Finger();
+//   while (1)
+//     ;
+// }
+void SetBaut_Finger(void) {
+  Serial.println("change Baut");
+  // uint8_t Adafruit_Fingerprint::setSysParaBaud(void) {
+  uint8_t packet[] = { 0x0e, 4, 1 };
+  // writePacket(theAddress, FINGERPRINT_COMMANDPACKET, sizeof(packet) + 2, packet);
+  Adafruit_Fingerprint_Packet pp = Adafruit_Fingerprint_Packet(FINGERPRINT_COMMANDPACKET, sizeof(packet), packet);
+  finger.writeStructuredPacket(pp);
+  uint8_t len = getReply(packet, DEFAULTTIMEOUT);
+  Serial.println(len);
+
+  packet[0] = { 0x0e };
+  packet[1] = { 6 };
+  packet[2] = { 0 };
+  // packet = { 0x0e, 6, 0 };
+  // writePacket(theAddress, FINGERPRINT_COMMANDPACKET, sizeof(packet)+2, packet);
+  pp = Adafruit_Fingerprint_Packet(FINGERPRINT_COMMANDPACKET, sizeof(packet), packet);
+  finger.writeStructuredPacket(pp);
+
+
+
+  len = getReply(packet, DEFAULTTIMEOUT);
+  Serial.println(len);
+  // if ((len != 1) && (packet[0] != FINGERPRINT_ACKPACKET))
+  //   return -1;
+  // return packet[1];
+}
 
 
 #define FINGERPRINT_DOWNLOAD 0x09
+uint8_t enrolldata(String st) {
+  // Serial.println(st.length());
+  // if (st.length() != 1025) {  // 1025列でなければ、エラー
+  //   return -1;
+  // }
+
+  // SetBaut_Finger();
+
+  uint8_t packet1[] = { FINGERPRINT_DOWNLOAD, 0x01 };
+  Adafruit_Fingerprint_Packet p1 = Adafruit_Fingerprint_Packet(FINGERPRINT_COMMANDPACKET, sizeof(packet1), packet1);
+
+  finger.writeStructuredPacket(p1);
+  delay(10);
+  // S_terial.flush();
+  uint8_t packet[32];
+  // uint8_t packet17[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
+  // uint8_t packet17[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20 };
+
+  // uint8_t packet16[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x24 };
+  uint8_t packet17[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2A };
+	// uint8_t packet17[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 034*16x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2A};
+
+  // Adafruit_Fingerprint_Packet p16 = Adafruit_Fingerprint_Packet(FINGERPRINT_DATAPACKET, sizeof(packet16), packet16);
+
+
+  // Adafruit_Fingerprint_Packet p16 = Adafruit_Fingerprint_Packet(FINGERPRINT_DATAPACKET, sizeof(packet16), packet16);
+  // uint8_t packet17[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
+  Adafruit_Fingerprint_Packet p17 = Adafruit_Fingerprint_Packet(FINGERPRINT_ENDDATAPACKET, sizeof(packet17), packet17);
+  // for (int i=0; i < 512; i++){
+  for (int ii = 0; ii < 16; ii++) {
+    for (int i = 0; i < 32; i++) {
+      packet[i] = 0;
+      // packet[i] = HexAtoi(st.substring(i * 2, i * 2 + 2));
+      packet[i] = HexAtoi(st.substring(i * 2 + ii * 2 * 32, i * 2 + 2 + ii * 2 * 32));
+      printHex(packet[i], 2);
+      Adafruit_Fingerprint_Packet pp = Adafruit_Fingerprint_Packet(FINGERPRINT_DATAPACKET, sizeof(packet), packet);
+      finger.writeStructuredPacket(pp);
+      delay(10);
+
+      // printHex(HexAtoi(st.substring(i * 2, i * 2 + 2)),2);
+      // Serial.print(packet[i]);
+      // Serial.print(",");
+      // printHex(packet[i], 2);
+      // Serial.print(",");
+    }
+  }
+  // finger.writeStructuredPacket(p16);
+  // delay(10);
+  finger.writeStructuredPacket(p17);
+  delay(10);
+
+
+  Serial.println();
+  packet1[1] = 0x02;
+  Serial.println(packet1[0], packet1[1]);
+  p1 = Adafruit_Fingerprint_Packet(FINGERPRINT_COMMANDPACKET, sizeof(packet1), packet1);
+  finger.writeStructuredPacket(p1);
+  delay(10);
+  for (int ii = 0; ii < 16; ii++) {
+    for (int i = 0; i < 32; i++) {
+      packet[i] = 0;
+      packet[i] = HexAtoi(st.substring(i * 2 + ii * 2 * 32, i * 2 + 2 + ii * 2 * 32));
+      printHex(packet[i], 2);
+      Adafruit_Fingerprint_Packet pp = Adafruit_Fingerprint_Packet(FINGERPRINT_DATAPACKET, sizeof(packet), packet);
+      finger.writeStructuredPacket(pp);
+      delay(10);
+
+      // printHex(HexAtoi(st.substring(i * 2, i * 2 + 2)),2);
+      // Serial.print(packet[i]);
+      // Serial.print(",");
+    }
+  }
+
+  // finger.writeStructuredPacket(p16);
+  // delay(10);
+  finger.writeStructuredPacket(p17);
+  delay(10);
+
+  // for (int i = 0; i < 34; i++) {
+  // }
+  // delay(100);
+  // Serial.print(st[i*2+1]);
+  // }
+
+  // uint8_t len = getReply(packet17, 10000);
+
+  // // Serial.print("len:");
+  // // Serial.println(len);
+
+  // if ((len != 1) && (packet[0] != FINGERPRINT_ACKPACKET))
+  //   return -1;
+  // return packet17[1];
+
+  uint8_t len = getReply(packet17, DEFAULTTIMEOUT);
+  Serial.print("len:");
+  Serial.println(len);
+  if ((len != 1) && (packet[0] != FINGERPRINT_ACKPACKET))
+    return -1;
+  return packet17[1];
+  // Serial.println("fin");
+  // Serial.flush();
+  return 1;
+}
+
 uint8_t uploadModel(void) {
   uint8_t packet[] = { FINGERPRINT_DOWNLOAD, 0x02 };
   uint8_t packet1[] = { FINGERPRINT_DOWNLOAD, 0x01 };
@@ -106,9 +266,11 @@ uint8_t uploadModel(void) {
   uint8_t packet12[] = { 0x6F, 0x24, 0x27, 0x1E, 0x6D, 0x32, 0x2A, 0x9E, 0x1F, 0xB5, 0x1C, 0x9E, 0x58, 0x40, 0x56, 0x5E, 0x2F, 0x22, 0x9F, 0x1F, 0x25, 0x24, 0xC6, 0x9F, 0x56, 0xA9, 0x0, 0x1F, 0x42, 0xAE, 0x9B, 0xFF, 0xB, 0xA2 };
   uint8_t packet13[] = { 0x3F, 0xBC, 0x59, 0x7F, 0x48, 0xC0, 0xC0, 0x7F, 0x32, 0xC1, 0x2, 0x9F, 0x56, 0x9A, 0x66, 0x7D, 0x3D, 0x25, 0xDD, 0x9D, 0x37, 0x27, 0x5, 0x7D, 0x54, 0x17, 0x26, 0x13, 0x6B, 0x16, 0xF, 0xB8, 0xC, 0x4D };
   uint8_t packet14[] = { 0x62, 0x98, 0x23, 0x18, 0x6E, 0x18, 0xA3, 0x99, 0x64, 0x1A, 0x65, 0x99, 0x58, 0x14, 0x4F, 0xB4, 0x36, 0x9B, 0xA0, 0x93, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x8, 0xA };
-  uint8_t packet15[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x24 };
+  uint8_t packet15[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x24 };  //len =34
   uint8_t packet16[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x24 };
   uint8_t packet17[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2A };
+  // uint8_t packet17[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x20 };
+  // uint8_t packet17[] = { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
   Adafruit_Fingerprint_Packet p0 = Adafruit_Fingerprint_Packet(FINGERPRINT_COMMANDPACKET, sizeof(packet), packet);
   Adafruit_Fingerprint_Packet p1 = Adafruit_Fingerprint_Packet(FINGERPRINT_COMMANDPACKET, sizeof(packet1), packet1);
   Adafruit_Fingerprint_Packet p2 = Adafruit_Fingerprint_Packet(FINGERPRINT_DATAPACKET, sizeof(packet2), packet2);
@@ -127,7 +289,24 @@ uint8_t uploadModel(void) {
   Adafruit_Fingerprint_Packet p15 = Adafruit_Fingerprint_Packet(FINGERPRINT_DATAPACKET, sizeof(packet15), packet15);
   Adafruit_Fingerprint_Packet p16 = Adafruit_Fingerprint_Packet(FINGERPRINT_DATAPACKET, sizeof(packet16), packet16);
   Adafruit_Fingerprint_Packet p17 = Adafruit_Fingerprint_Packet(FINGERPRINT_ENDDATAPACKET, sizeof(packet17), packet17);
-
+  for (int i = 0; i < 34; i++) printHex(packet2[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet3[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet4[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet5[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet6[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet7[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet8[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet9[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet10[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet11[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet12[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet13[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet14[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet15[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet16[i], 2);
+  for (int i = 0; i < 34; i++) printHex(packet17[i], 2);
+  Serial.println();
+  Serial.println('f');
   finger.writeStructuredPacket(p1);
   delay(10);
   finger.writeStructuredPacket(p2);
@@ -197,9 +376,10 @@ uint8_t uploadModel(void) {
   delay(10);
   finger.writeStructuredPacket(p17);
   delay(10);
-
-  uint8_t len = getReply(packet17, DEFAULTTIMEOUT);
-
+  Serial.println();
+  uint8_t len = getReply(packet17, 100000);
+  Serial.print("len:");
+  Serial.println(len);
   if ((len != 1) && (packet[0] != FINGERPRINT_ACKPACKET))
     return -1;
   return packet17[1];
@@ -215,6 +395,7 @@ uint8_t downloadFingerprintTemplate(uint16_t id) {
   Serial.flush();
 
   uint8_t p = finger.loadModel(id);
+  delay(10);
   Serial.println(id);
   Serial.flush();
   switch (p) {
@@ -252,36 +433,109 @@ uint8_t downloadFingerprintTemplate(uint16_t id) {
   }
   Serial.flush();
   // one data packet is 267 bytes. in one data packet, 11 bytes are 'usesless' :D
-  uint8_t bytesReceived[534];  // 2 data packets
-  memset(bytesReceived, 0xff, 534);
 
+
+  uint8_t templateBuffer[688];
+  memset(templateBuffer, 0xffff, 688);  //initialize template buffer
+  int index = 0;
   uint32_t starttime = millis();
-  int i = 0;
-  while (i < 534 && (millis() - starttime) < 20000) {
-    if (Serial1.available()) {
-      bytesReceived[i++] = Serial1.read();
+  while ((index < 688) && ((millis() - starttime) < 1000)) {
+    if (Serial1.available() > 0) {
+      templateBuffer[index] = Serial1.read();
+      index++;
     }
   }
-  Serial.print(i);
-  Serial.println(" bytes read.");
-  Serial.println("Decoding packet...");
 
-  uint8_t fingerTemplate[512];  // the real template
-  memset(fingerTemplate, 0xff, 512);
+  Serial.print(index);
+  Serial.println(" bytes read");
+
+  //dump entire templateBuffer.
+  index = 0;
+  for (int ii = 0; ii < 4; ii++) {
+
+    index += 9;
+    for (int i = 0; i < 128; i++) {
+      printHex(templateBuffer[index++], 2);
+    }
+    index += 2;
+  }
+  Serial.println();
+
+  // }
+
+
+
+
+
+
+
+
+  // uint8_t bytesReceived[534];  // 2 data packets
+  // memset(bytesReceived, 0xff, 534);
+
+  // uint32_t starttime = millis();
+  // int i = 0;
+  // while (i < 534 && (millis() - starttime) < 20000) {
+  //   if (Serial1.available()) {
+  //     bytesReceived[i++] = Serial1.read();
+  //   }
+  // }
+  // Serial.print(i);
+  // Serial.println(" bytes read.");
+  // Serial.println("Decoding packet...");
+
+  uint8_t fingerTemplate[534];  // the real template
+  memset(fingerTemplate, 0x00, 534);
 
   // filtering only the data packets
-  int uindx = 9, index = 0;
-  memcpy(fingerTemplate + index, bytesReceived + uindx, 256);  // first 256 bytes
-  uindx += 256;                                                // skip data
-  uindx += 2;                                                  // skip checksum
-  uindx += 9;                                                  // skip next header
-  index += 256;                                                // advance pointer
-  memcpy(fingerTemplate + index, bytesReceived + uindx, 256);  // second 256 bytes
+  int uindx = 9;
+  index = 0;
+  // memcpy(fingerTemplate + index, bytesReceived + uindx, 128);  // first 256 bytes
+  // index += 128;                                                // skip data
+  // uindx += 128;                                                // skip checksum
+  // uindx += 2;                                                  // skip checksum
+  // uindx += 9;                                                  // skip next header
+  // memcpy(fingerTemplate + index, bytesReceived + uindx, 128);  // first 256 bytes
+  // index += 128;                                                // skip data
+  // uindx += 128;                                                // skip checksum
+  // uindx += 2;                                                  // skip checksum
+  // uindx += 9;                                                  // skip next header
+  // memcpy(fingerTemplate + index, bytesReceived + uindx, 128);  // first 256 bytes
+  // index += 128;                                                // skip data
+  // uindx += 128;                                                // skip checksum
+  // // uindx += 128;                                                  // skip checksum
+  // uindx += 2;                                                  // skip checksum
+  // uindx += 9;                                                  // skip next header
+  // memcpy(fingerTemplate + index, bytesReceived + uindx, 108);  // first 256 bytes
 
+  // index += 128-32;                                                // skip data
+  // uindx += 128-32;                                                  // skip checksum
+  // memcpy(fingerTemplate + index, bytesReceived + uindx, 32);  // first 256 bytes
+  // uindx += 128;                                                // skip data
+  // uindx += 2;                                                  // skip checksum
+  // uindx += 9;                                                  // skip next header
+  // memcpy(fingerTemplate + index, bytesReceived + uindx, 128);  // first 256 bytes
+  // uindx += 128;                                                // skip data
+  // uindx += 2;                                                  // skip checksum
+  // uindx += 9;                                                  // skip next header
+  // memcpy(fingerTemplate + index, bytesReceived + uindx, 128);  // first 256 bytes
+  // memcpy(fingerTemplate + index, bytesReceived + uindx, 256);  // first 256 bytes
+  // uindx += 256;                                                // skip data
+  // uindx += 2;                                                  // skip checksum
+  // uindx += 9;                                                  // skip next header
+  // index += 256;                                                // advance pointer
+  // // index += 11;                                                // advance pointer
+  // memcpy(fingerTemplate + index, bytesReceived + uindx, 256);  // second 256 bytes
+
+  // for (int i = 0; i < 534; ++i) {
+  //Serial.print("0x");
+  // printHex(bytesReceived[i], 2);
+  //Serial.print(", ");
+  // }
   for (int i = 0; i < 512; ++i) {
-    //Serial.print("0x");
+    // Serial.print("0x");
     printHex(fingerTemplate[i], 2);
-    //Serial.print(", ");
+    //   //Serial.print(", ");
   }
   Serial.println("\ndone.");
   Serial.flush();
@@ -314,6 +568,163 @@ uint8_t downloadFingerprintTemplate(uint16_t id) {
     Serial.println();
     }*/
 }
+
+
+uint16_t getFingerprintEnroll(uint16_t id) {
+
+  int p = -1;
+  Serial.print("Waiting for valid finger to enroll as #");
+  Serial.println(id);
+  Serial.print("SOUND:putfinger");
+  while (p != FINGERPRINT_OK) {
+    p = finger.getImage();
+    switch (p) {
+      case FINGERPRINT_OK:
+        Serial.println("Image taken");
+        break;
+      case FINGERPRINT_NOFINGER:
+        Serial.println(".");
+        break;
+      case FINGERPRINT_PACKETRECIEVEERR:
+        Serial.println("Communication error");
+        break;
+      case FINGERPRINT_IMAGEFAIL:
+        Serial.println("Imaging error");
+        break;
+      default:
+        Serial.println("Unknown error");
+        break;
+    }
+  }
+
+  // OK success!
+
+  p = finger.image2Tz(1);
+  switch (p) {
+    case FINGERPRINT_OK:
+      Serial.println("Image converted");
+      break;
+    case FINGERPRINT_IMAGEMESS:
+      Serial.println("Image too messy");
+      return p;
+    case FINGERPRINT_PACKETRECIEVEERR:
+      Serial.println("Communication error");
+      return p;
+    case FINGERPRINT_FEATUREFAIL:
+      Serial.println("Could not find fingerprint features");
+      Serial.println("SOUND:finger_invalid");
+      return p;
+    case FINGERPRINT_INVALIDIMAGE:
+      Serial.println("Could not find fingerprint features");
+      Serial.println("SOUND:finger_invalid");
+      return p;
+    default:
+      Serial.println("Unknown error");
+      return p;
+  }
+
+  Serial.println("Remove finger");
+  Serial.println("SOUND:1");
+  delay(2000);
+  p = 0;
+  while (p != FINGERPRINT_NOFINGER) {
+    p = finger.getImage();
+  }
+  Serial.print("ID ");
+  Serial.println(id);
+  p = -1;
+  Serial.println("Place same finger again");
+  Serial.println("SOUND:SameFinger");
+  while (p != FINGERPRINT_OK) {
+    p = finger.getImage();
+    switch (p) {
+      case FINGERPRINT_OK:
+        Serial.println("Image taken");
+        Serial.println("SOUND:OK");
+        break;
+      case FINGERPRINT_NOFINGER:
+        Serial.print(".");
+        break;
+      case FINGERPRINT_PACKETRECIEVEERR:
+        Serial.println("Communication error");
+        break;
+      case FINGERPRINT_IMAGEFAIL:
+        Serial.println("Imaging error");
+        break;
+      default:
+        Serial.println("Unknown error");
+        break;
+    }
+  }
+
+  // OK success!
+
+  p = finger.image2Tz(2);
+  switch (p) {
+    case FINGERPRINT_OK:
+      Serial.println("Image converted");
+      break;
+    case FINGERPRINT_IMAGEMESS:
+      Serial.println("Image too messy");
+      return p;
+    case FINGERPRINT_PACKETRECIEVEERR:
+      Serial.println("Communication error");
+      return p;
+    case FINGERPRINT_FEATUREFAIL:
+      Serial.println("SOUND:finger_invalid");
+      Serial.println("Could not find fingerprint features");
+      return p;
+    case FINGERPRINT_INVALIDIMAGE:
+      Serial.println("SOUND:finger_invalid");
+      Serial.println("Could not find fingerprint features");
+      return p;
+    default:
+      Serial.println("Unknown error");
+      return p;
+  }
+
+  // OK converted!
+  Serial.print("Creating model for #");
+  Serial.println(id);
+
+  p = finger.createModel();
+  if (p == FINGERPRINT_OK) {
+    Serial.println("Prints matched!");
+    Serial.println("SOUND:2");
+  } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
+    Serial.println("Communication error");
+    return p;
+  } else if (p == FINGERPRINT_ENROLLMISMATCH) {
+    Serial.println("SOUND:finger_notMatch");
+    Serial.println("Fingerprints did not match");
+    return p;
+  } else {
+    Serial.println("Unknown error");
+    return p;
+  }
+
+  Serial.print("ID ");
+  Serial.println(id);
+  p = finger.storeModel(id);
+  if (p == FINGERPRINT_OK) {
+    Serial.println("Stored!");
+  } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
+    Serial.println("Communication error");
+    return p;
+  } else if (p == FINGERPRINT_BADLOCATION) {
+    Serial.println("Could not store in that location");
+    return p;
+  } else if (p == FINGERPRINT_FLASHERR) {
+    Serial.println("Error writing to flash");
+    return p;
+  } else {
+    Serial.println("Unknown error");
+    return p;
+  }
+
+  return true;
+}
+
 
 
 
